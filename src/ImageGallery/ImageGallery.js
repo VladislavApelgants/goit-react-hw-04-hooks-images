@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import Loader from 'react-loader-spinner';
 import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
 import PropTypes from 'prop-types';
@@ -6,105 +6,91 @@ import s from './ImageGallery.module.scss';
 import ImageGalleryItem from '../ImageGalleryItem';
 import ImageApi from '../imageApi';
 
-export default class ImageGallery extends Component {
-  state = {
-    responseData: null,
-    page: 1,
-    error: '',
-    status: 'idle',
-  };
+export default function ImageGallery({
+  searchImage,
+  openLarge,
+  page,
+  handlPage,
+}) {
+  const [responseData, setResponseData] = useState(null);
+  const [error, setError] = useState('');
+  const [status, setStatus] = useState('idle');
 
-  componentDidUpdate(prevProps, prevState) {
-    const { page } = this.state;
-    const { searchImage } = this.props;
+  useEffect(() => {
+    setResponseData(null);
+    setStatus('idle');
+  }, [searchImage]);
 
-    if (prevProps.searchImage !== searchImage) {
-      this.setState({
-        responseData: null,
-        page: 1,
-      });
+  useEffect(() => {
+    if (!searchImage) {
+      return;
     }
 
-    if (prevProps.searchImage !== searchImage || prevState.page !== page) {
-      this.setState({
-        status: 'pending',
+    setStatus('pending');
+    ImageApi(searchImage, page)
+      .then(data => {
+        if (data.hits.length > 0) {
+          setResponseData(prevResponseData => {
+            if (prevResponseData) {
+              return [...data.hits, ...prevResponseData];
+            }
+            return setResponseData(data.hits);
+          });
+          setStatus('resolved');
+        }
+      })
+      .catch(error => {
+        setError(error);
+        setStatus('rejected');
       });
+  }, [searchImage, page]);
 
-      ImageApi(searchImage, page)
-        .then(data => {
-          if (data.hits.length > 0) {
-            this.setState(previos => {
-              if (previos.responseData !== null) {
-                return {
-                  responseData: [...data.hits, ...previos.responseData],
-                  status: 'resolved',
-                };
-              } else if (previos.responseData === null) {
-                return { responseData: data.hits, status: 'resolved' };
-              }
-            });
-          }
-        })
-        .catch(error => this.setState({ error, status: 'rejected' }));
-    }
-  }
-
-  changePage = () => {
-    this.setState(prevState => {
-      return { page: prevState.page + 1 };
-    });
+  const changePage = () => {
+    handlPage(page + 1);
   };
 
-  sendModalImage = e => {
-    const { openLarge } = this.props;
+  const sendModalImage = e => {
     const { large, name } = e.currentTarget.attributes;
     openLarge(large.value, name.value);
   };
 
-  render() {
-    const { responseData, error, status } = this.state;
+  if (status === 'idle') {
+    return <p className={s.enterQuery}>Enter query</p>;
+  }
 
-    if (status === 'idle') {
-      return <p className={s.enterQuery}>Enter query</p>;
-    }
+  if (status === 'pending') {
+    return (
+      <div className={s.spinnerBox}>
+        <Loader
+          type="Oval"
+          color="#3f51b5"
+          height={100}
+          width={100}
+          timeout={3000}
+        />
+      </div>
+    );
+  }
 
-    if (status === 'pending') {
-      return (
-        <div className={s.spinnerBox}>
-          <Loader
-            type="Oval"
-            color="#3f51b5"
-            height={100}
-            width={100}
-            timeout={3000}
-          />
-        </div>
-      );
-    }
-
-    if (status === 'resolved') {
-      return (
-        <>
+  if (status === 'resolved') {
+    return (
+      <>
+        {responseData && (
+          <button type="button" className="Button" onClick={changePage}>
+            Load more
+          </button>
+        )}
+        <ul className={s.ImageGallery}>
           {responseData && (
-            <button type="button" className="Button" onClick={this.changePage}>
-              Load more
-            </button>
+            <ImageGalleryItem data={responseData} modalImage={sendModalImage} />
           )}
-          <ul className={s.ImageGallery}>
-            {responseData && (
-              <ImageGalleryItem
-                data={responseData}
-                modalImage={this.sendModalImage}
-              />
-            )}
-          </ul>
-        </>
-      );
-    }
+        </ul>
+      </>
+    );
+  }
 
-    if (status === 'rejected') {
-      return <p>{error.message}</p>;
-    }
+  if (status === 'rejected') {
+    return <p>{error.message}</p>;
   }
 }
 
