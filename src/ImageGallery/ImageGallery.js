@@ -3,7 +3,7 @@ import Loader from 'react-loader-spinner';
 import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
 import PropTypes from 'prop-types';
 import s from './ImageGallery.module.scss';
-import ImageGalleryItem from '../ImageGalleryItem';
+import ImageGalleryList from '../ImageGalleryItem';
 import ImageApi from '../imageApi';
 
 export default function ImageGallery({
@@ -80,11 +80,9 @@ export default function ImageGallery({
             Load more
           </button>
         )}
-        <ul className={s.ImageGallery}>
-          {responseData && (
-            <ImageGalleryItem data={responseData} modalImage={sendModalImage} />
-          )}
-        </ul>
+        {responseData && (
+          <ImageGalleryList data={responseData} modalImage={sendModalImage} />
+        )}
       </>
     );
   }

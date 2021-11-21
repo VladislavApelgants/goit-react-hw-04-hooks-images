@@ -2,9 +2,9 @@ import s from './ImageGalleryItem.module.scss';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 
-export default function ImageGalleryItem({ data, modalImage }) {
+export default function ImageGalleryList({ data, modalImage }) {
   return (
-    <>
+    <ul className={s.ImageGallery}>
       {data.map(elem => (
         <li
           key={uuidv4()}
@@ -20,11 +20,11 @@ export default function ImageGalleryItem({ data, modalImage }) {
           />
         </li>
       ))}
-    </>
+    </ul>
   );
 }
 
-ImageGalleryItem.propTypes = {
+ImageGalleryList.propTypes = {
   data: PropTypes.array,
   modalImage: PropTypes.func,
 };

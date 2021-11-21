@@ -14,7 +14,6 @@ export default function Modal({ img, alt, onClose }) {
   });
 
   function closeByEscape(e) {
-    console.log(e.code);
     if (e.code === 'Escape') {
       onClose();
     }
